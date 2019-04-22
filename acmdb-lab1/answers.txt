@@ -11,4 +11,4 @@ I only added some exception types that may be thrown out by certain methods, acc
 I haven't implement TupleDesc.hashCode() because I didn't see any HashMap using it as its key.
 
 4. Time Spent and Difficulties
-I roughly spent 8--10 hours on Lab1, about 60% of which is about thinking and trying to comprehending the structure. No significant difficulty has been found so far.
+I roughly spent 8--10 hours on Lab1, about 60% of which is about thinking and trying to comprehending the structure. No significant difficulty has been found so far. But it did take me some time to think about how the pages are arranged in a file and how to read them. 
