@@ -1,0 +1,14 @@
+Report for Lab1
+Yuxuan Duan
+
+1. Design Decisions
+There is few special designs in Lab1. Only that java.io.RandomAccessFile is used in HeapFile.readPage() for random access.
+
+2. API Changes
+I only added some exception types that may be thrown out by certain methods, according to the definitions of these methods. These changes should not affect the outcomes of the tests.
+
+3. Missing or Incomplete Elements
+I haven't implement TupleDesc.hashCode() because I didn't see any HashMap using it as its key.
+
+4. Time Spent and Difficulties
+I roughly spent 8--10 hours on Lab1, about 60% of which is about thinking and trying to comprehending the structure. No significant difficulty has been found so far.
