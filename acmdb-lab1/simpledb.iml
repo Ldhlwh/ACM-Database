@@ -16,7 +16,7 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="junit-4.5.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/junit-4.5.jar!/" />
@@ -25,5 +25,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="ant-contrib-1.0b3" level="project" />
   </component>
 </module>
