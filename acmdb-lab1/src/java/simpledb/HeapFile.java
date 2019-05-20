@@ -69,23 +69,15 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid)
-            throws IllegalArgumentException
+            throws IllegalArgumentException, IOException
     {
         // some code goes here
-        try
-        {
-            RandomAccessFile raf = new RandomAccessFile(file, "r");
-            raf.seek(pid.pageNumber() * BufferPool.getPageSize());
-            byte[] data = new byte[BufferPool.getPageSize()];
-            raf.read(data);
-            raf.close();
-            return new HeapPage(new HeapPageId(getId(), pid.pageNumber()), data);
-        }
-        catch(IOException e)
-        {
-            System.err.println("Read Page Failed.");
-            return null;
-        }
+        RandomAccessFile raf = new RandomAccessFile(file, "r");
+        raf.seek(pid.pageNumber() * BufferPool.getPageSize());
+        byte[] data = new byte[BufferPool.getPageSize()];
+        raf.read(data);
+        raf.close();
+        return new HeapPage(new HeapPageId(getId(), pid.pageNumber()), data);
     }
 
     // see DbFile.java for javadocs
@@ -120,8 +112,8 @@ public class HeapFile implements DbFile {
     
     public class HeapFileIterator implements DbFileIterator {
         
-        private Iterator<Tuple> curIterator;
-        private int curId;
+        private ArrayList<Iterator<Tuple>> tupleIterators = new ArrayList<>();
+        private int curIterator = 0;
         private int numIterators;
         private TransactionId tid;
         
@@ -132,32 +124,33 @@ public class HeapFile implements DbFile {
     
         @Override
         public void open()
-                throws DbException, TransactionAbortedException
+                throws DbException, TransactionAbortedException, IOException
         {
             numIterators = numPages();
-            curId = 0;
-            curIterator = ((HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), curId), Permissions.READ_ONLY)).iterator();
+            for(int i = 0; i < numIterators; i++)
+            {
+                HeapPage now = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), i), Permissions.READ_ONLY);
+                tupleIterators.add(now.iterator());
+            }
         }
         
         public boolean hasNext()
-                throws DbException, TransactionAbortedException
         {
             if(numIterators == 0)
                 return false;
-            if(curIterator.hasNext())
-                return true;
-            if(curId >= numIterators - 1)
-                return false;
-            curIterator = ((HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), ++curId), Permissions.READ_ONLY)).iterator();
-            return true;
+            for(; curIterator < numIterators; curIterator++)
+            {
+                if(tupleIterators.get(curIterator).hasNext())
+                    return true;
+            }
+            return false;
         }
         
         public Tuple next()
-                throws DbException, TransactionAbortedException
         {
             if(!hasNext())
                 throw new NoSuchElementException();
-            return curIterator.next();
+            return tupleIterators.get(curIterator).next();
         }
         
         public void remove() throws UnsupportedOperationException
@@ -167,7 +160,7 @@ public class HeapFile implements DbFile {
     
         @Override
         public void rewind()
-                throws DbException, TransactionAbortedException
+                throws DbException, TransactionAbortedException, IOException
         {
             close();
             open();
@@ -176,7 +169,8 @@ public class HeapFile implements DbFile {
         @Override
         public void close()
         {
-            numIterators = curId = 0;
+            tupleIterators.clear();
+            curIterator = numIterators = 0;
         }
     }
     

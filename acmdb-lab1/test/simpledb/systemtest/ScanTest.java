@@ -73,7 +73,7 @@ public class ScanTest extends SimpleDbTestBase {
     @Test public void testCache() throws IOException, DbException, TransactionAbortedException {
         /** Counts the number of readPage operations. */
         class InstrumentedHeapFile extends HeapFile {
-            public InstrumentedHeapFile(File f, TupleDesc td) throws IOException {
+            public InstrumentedHeapFile(File f, TupleDesc td) {
                 super(f, td);
             }
 

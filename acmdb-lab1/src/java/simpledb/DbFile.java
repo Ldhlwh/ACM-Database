@@ -18,7 +18,7 @@ public interface DbFile {
      *
      * @throws IllegalArgumentException if the page does not exist in this file.
      */
-    public Page readPage(PageId id) throws IllegalArgumentException;
+    public Page readPage(PageId id) throws FileNotFoundException, IOException;
 
     /**
      * Push the specified page to disk.
