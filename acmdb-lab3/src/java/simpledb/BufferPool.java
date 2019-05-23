@@ -103,6 +103,32 @@ public class BufferPool {
 	}
 	
 	/**
+	 * Provide a method to ensure that the page is in the BufferPool before marked dirty.
+	 * Only used by insertTuple() and deleteTuple()
+	 * If the page is already in the BufferPool (but as an old version), repalce it.
+	 * Otherwise, instead of getting it through the Catalog, use the page provided.
+	 */
+	private void replacePage(TransactionId tid, Page page, Permissions perm)
+		throws TransactionAbortedException, DbException
+	{
+		PageId pid = page.getId();
+		if(idToPage.containsKey(pid))
+		{
+			idToTime.put(pid, time++);
+			idToPage.replace(pid, page);
+		}
+		else
+		{
+			if(idToPage.size() >= maxPages)
+			{
+				evictPage();
+			}
+			idToPage.put(pid, page);
+			idToTime.put(pid, time++);
+		}
+	}
+	
+	/**
 	 * Releases the lock on a page.
 	 * Calling this is very risky, and may result in wrong behavior. Think hard
 	 * about who needs to call this and why, and why they can run the risk of
@@ -169,6 +195,7 @@ public class BufferPool {
 		ArrayList<Page> dirty = file.insertTuple(tid, t);
 		for(Page p : dirty)
 		{
+			replacePage(tid, p, Permissions.READ_WRITE);
 			p.markDirty(true, tid);
 		}
 	}
@@ -190,9 +217,11 @@ public class BufferPool {
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
-		ArrayList<Page> dirty = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+		DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+		ArrayList<Page> dirty = file.deleteTuple(tid, t);
 		for(Page p : dirty)
 		{
+			replacePage(tid, p, Permissions.READ_WRITE);
 			p.markDirty(true, tid);
 		}
 	}

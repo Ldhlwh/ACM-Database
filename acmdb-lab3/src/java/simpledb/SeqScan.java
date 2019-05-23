@@ -111,6 +111,7 @@ public class SeqScan implements DbIterator {
             TupleDesc.TDItem now = it.next();
             newType[i] = now.fieldType;
             newField[i] = tableAlias + "." + now.fieldName;
+            i++;
         }
         return new TupleDesc(newType, newField);
     }
