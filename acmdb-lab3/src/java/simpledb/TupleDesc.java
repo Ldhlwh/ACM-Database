@@ -253,4 +253,9 @@ public class TupleDesc implements Serializable {
         }
         return rtn.toString();
     }
+    
+    public void setFieldName(int i, String name)
+    {
+        tditems.get(i).fieldName = name;
+    }
 }

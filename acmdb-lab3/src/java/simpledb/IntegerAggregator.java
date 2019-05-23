@@ -158,7 +158,7 @@ public class IntegerAggregator implements Aggregator {
             typeAr[0] = gbFieldType;
             typeAr[1] = Type.INT_TYPE;
             String[] fieldAr = new String[2];
-            fieldAr[0] = "groupValue";
+            fieldAr[0] = "groupVal";
             fieldAr[1] = "aggregateVal";
             TupleDesc rtnDesc = new TupleDesc(typeAr, fieldAr);
             ArrayList<Tuple> rtn = new ArrayList<>();

@@ -18,6 +18,7 @@ public class Aggregate extends Operator {
     private Aggregator aggregator;
     private DbIterator rtnIt;
     private boolean fetched = false;
+    private String gbFieldName = null;
 
     /**
      * Constructor.
@@ -51,6 +52,7 @@ public class Aggregate extends Operator {
 		else
 		{
 			gType = childIt.getTupleDesc().getFieldType(gField);
+			gbFieldName = childIt.getTupleDesc().getFieldName(gField);
 		}
 		if(childIt.getTupleDesc().getFieldType(aField) == Type.INT_TYPE)
 		{
@@ -61,6 +63,8 @@ public class Aggregate extends Operator {
 			aggregator = new StringAggregator(gField, gType, aField, op);
 		}
 		rtnIt = aggregator.iterator();
+		if(gField != Aggregator.NO_GROUPING)
+			rtnIt.getTupleDesc().setFieldName(0, gbFieldName);
     }
 
     /**
@@ -142,6 +146,8 @@ public class Aggregate extends Operator {
 			childIt.close();
 			fetched = true;
 			rtnIt = aggregator.iterator();
+			if(gField != Aggregator.NO_GROUPING)
+				rtnIt.getTupleDesc().setFieldName(0, gbFieldName);
 			rtnIt.open();
 		}
 		while(rtnIt.hasNext())

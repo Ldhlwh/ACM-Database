@@ -276,14 +276,13 @@ public class Parser {
     public Query handleQueryStatement(ZQuery s, TransactionId tId)
             throws TransactionAbortedException, DbException, IOException,
             simpledb.ParsingException, Zql.ParseException {
+        
         Query query = new Query(tId);
-
         LogicalPlan lp = parseQueryLogicalPlan(tId, s);
         DbIterator physicalPlan = lp.physicalPlan(tId,
-                TableStats.getStatsMap(), explain);
+                    TableStats.getStatsMap(), explain);
         query.setPhysicalPlan(physicalPlan);
         query.setLogicalPlan(lp);
-
         if (physicalPlan != null) {
             Class<?> c;
             try {
@@ -316,7 +315,6 @@ public class Parser {
                 e.printStackTrace();
             }
         }
-
         return query;
     }
 
@@ -524,8 +522,10 @@ public class Parser {
                         query = handleDeleteStatement((ZDelete) s,
                                 curtrans.getId());
                     else if (s instanceof ZQuery)
-                        query = handleQueryStatement((ZQuery) s,
+                    {
+                        query = handleQueryStatement((ZQuery)s,
                                 curtrans.getId());
+                    }
                     else {
                         System.out
                                 .println("Can't parse "
@@ -534,7 +534,6 @@ public class Parser {
                     }
                     if (query != null)
                         query.execute();
-
                     if (!inUserTrans && curtrans != null) {
                         curtrans.commit();
                         System.out.println("Transaction "

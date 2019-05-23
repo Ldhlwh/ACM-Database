@@ -1,8 +1,5 @@
 package simpledb;
 
-import com.sun.org.apache.bcel.internal.generic.ALOAD;
-
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
