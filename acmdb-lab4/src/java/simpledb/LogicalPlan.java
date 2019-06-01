@@ -285,12 +285,10 @@ public class LogicalPlan {
      *  @return A DbIterator representing this plan.
      */ 
     public DbIterator physicalPlan(TransactionId t, Map<String,TableStats> baseTableStats, boolean explain) throws ParsingException {
-        
         Iterator<LogicalScanNode> tableIt = tables.iterator();
         HashMap<String,String> equivMap = new HashMap<String,String>();
         HashMap<String,Double> filterSelectivities = new HashMap<String, Double>();
         HashMap<String,TableStats> statsMap = new HashMap<String,TableStats>();
-        
         while (tableIt.hasNext()) {
             LogicalScanNode table = tableIt.next();
             SeqScan ss = null;
@@ -306,8 +304,7 @@ public class LogicalPlan {
             filterSelectivities.put(table.alias, 1.0);
 
         }
-        
-        Iterator<LogicalFilterNode> filterIt = filters.iterator();        
+        Iterator<LogicalFilterNode> filterIt = filters.iterator();
         while (filterIt.hasNext()) {
             LogicalFilterNode lf = filterIt.next();
             DbIterator subplan = subplanMap.get(lf.tableAlias);
@@ -344,11 +341,9 @@ public class LogicalPlan {
 
             //s.addSelectivityFactor(estimateFilterSelectivity(lf,statsMap));
         }
-        
         JoinOptimizer jo = new JoinOptimizer(this,joins);
 
         joins = jo.orderJoins(statsMap,filterSelectivities,explain);
-        
         Iterator<LogicalJoinNode> joinIt = joins.iterator();
         while (joinIt.hasNext()) {
             LogicalJoinNode lj = joinIt.next();
@@ -356,7 +351,6 @@ public class LogicalPlan {
             DbIterator plan2;
             boolean isSubqueryJoin = lj instanceof LogicalSubplanJoinNode;
             String t1name, t2name;
-
             if (equivMap.get(lj.t1Alias)!=null)
                 t1name = equivMap.get(lj.t1Alias);
             else
@@ -366,7 +360,6 @@ public class LogicalPlan {
                 t2name = equivMap.get(lj.t2Alias);
             else
                 t2name = lj.t2Alias;
-
             plan1 = subplanMap.get(t1name);
 
             if (isSubqueryJoin) {
@@ -402,7 +395,6 @@ public class LogicalPlan {
             }
             
         }
-        
         if (subplanMap.size() > 1) {
             throw new ParsingException("Query does not include join expressions joining all nodes!");
         }
@@ -458,7 +450,6 @@ public class LogicalPlan {
 
                 }
         }
-        
         if (hasAgg) {
             TupleDesc td = node.getTupleDesc();
             Aggregate aggNode;

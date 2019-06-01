@@ -4,6 +4,12 @@ package simpledb;
  */
 public class IntHistogram {
 
+    private int[] bucketCnt;
+    private int min, max;
+    private double denominator;
+    private int totalCnt = 0;
+    private int numBuckets;
+    
     /**
      * Create a new IntHistogram.
      * 
@@ -22,7 +28,17 @@ public class IntHistogram {
      */
     public IntHistogram(int buckets, int min, int max) {
     	// some code goes here
+        numBuckets = Math.min(buckets, max - min + 1);
+        bucketCnt = new int[numBuckets];
+        this.min = min;
+        this.max = max;
+        denominator = (max - min + 1) / (double)numBuckets;
     }
+    /**
+     * From now on value v should be counted into the
+     * (v - min) / ((max - min + 1) / # bucket) -th bucket.
+     * And to save calculation time, (max - min + 1) / # bucket is pre-calculated as above.
+     */
 
     /**
      * Add a value to the set of values that you are keeping a histogram of.
@@ -30,6 +46,9 @@ public class IntHistogram {
      */
     public void addValue(int v) {
     	// some code goes here
+        int bucketNo = (int)((v - min) / denominator);
+        bucketCnt[bucketNo]++;
+        totalCnt++;
     }
 
     /**
@@ -43,8 +62,85 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
-
     	// some code goes here
+        if(v > max)
+        {
+            switch(op)
+            {
+                case EQUALS:
+                    return 0.0;
+                case NOT_EQUALS:
+                    return 1.0;
+                case GREATER_THAN:
+                    return 0.0;
+                case GREATER_THAN_OR_EQ:
+                    return 0.0;
+                case LESS_THAN:
+                    return 1.0;
+                case LESS_THAN_OR_EQ:
+                    return 1.0;
+                case LIKE:
+                    return 0.0;
+            }
+            return -1.0;
+        }
+        if(v < min)
+        {
+            switch(op)
+            {
+                case EQUALS:
+                    return 0.0;
+                case NOT_EQUALS:
+                    return 1.0;
+                case GREATER_THAN:
+                    return 1.0;
+                case GREATER_THAN_OR_EQ:
+                    return 1.0;
+                case LESS_THAN:
+                    return 0.0;
+                case LESS_THAN_OR_EQ:
+                    return 0.0;
+                case LIKE:
+                    return 0.0;
+            }
+            return -1.0;
+        }
+        int bucketNo = (int)((v - min) / denominator);
+        int bucketMin = (int)Math.ceil(denominator * bucketNo) + min;
+        int bucketMax = (int)Math.ceil(denominator * (bucketNo + 1)) + min - 1;
+        double cnt = bucketCnt[bucketNo];
+        if(op == Predicate.Op.EQUALS)
+            return (cnt / (bucketMax - bucketMin + 1)) / totalCnt;
+        if(op == Predicate.Op.GREATER_THAN || op == Predicate.Op.GREATER_THAN_OR_EQ)
+        {
+            double rtn = 0.0;
+            if(op == Predicate.Op.GREATER_THAN_OR_EQ)
+                rtn += cnt / (bucketMax - bucketMin + 1);
+            rtn += ((double)(bucketMax - v) / (bucketMax - bucketMin + 1)) * cnt;
+            for(int i = bucketNo + 1; i < numBuckets; i++)
+            {
+                rtn += bucketCnt[i];
+            }
+            return rtn / totalCnt;
+        }
+        if(op == Predicate.Op.LESS_THAN || op == Predicate.Op.LESS_THAN_OR_EQ)
+        {
+            double rtn = 0.0;
+            if(op == Predicate.Op.LESS_THAN_OR_EQ)
+                rtn += cnt / (bucketMax - bucketMin + 1);
+            rtn += ((double)(v - bucketMin) / (bucketMax - bucketMin + 1)) * cnt;
+            for(int i = bucketNo - 1; i >= 0; i--)
+            {
+                rtn += bucketCnt[i];
+            }
+            return rtn / totalCnt;
+        }
+        if(op == Predicate.Op.NOT_EQUALS)
+        {
+            return 1.0 - (cnt / (bucketMax - bucketMin + 1)) / totalCnt;
+        }
+        if(op == Predicate.Op.LIKE)
+            return 0.1;
         return -1.0;
     }
     
@@ -67,6 +163,17 @@ public class IntHistogram {
      */
     public String toString() {
         // some code goes here
-        return null;
+        StringBuffer rtn = new StringBuffer();
+        rtn.append("[");
+        for(int i = 0; i < numBuckets; i++)
+        {
+            int bucketMin = (int)Math.ceil(denominator * i);
+            int bucketMax = (int)Math.floor(denominator * (i + 1));
+            rtn.append(bucketCnt[i] + "(" + bucketMin + ", " + bucketMax + ")");
+            if(i != numBuckets - 1)
+                rtn.append(", ");
+        }
+        rtn.append("]");
+        return rtn.toString();
     }
 }

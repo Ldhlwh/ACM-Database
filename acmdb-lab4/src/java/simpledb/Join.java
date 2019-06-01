@@ -16,11 +16,6 @@ public class Join extends Operator {
     private boolean fetched = false;
     private Tuple t1;
     
-    private boolean useHashEquiJoin = false;
-    private Map<Integer, ArrayList<Tuple>> hashed = new HashMap<>();
-    private Iterator<Tuple> t2It;
-    private boolean fetching = false; // true if an ArrayList is half-fetched
-    
     
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -39,10 +34,6 @@ public class Join extends Operator {
         childIt1 = child1;
         childIt2 = child2;
         tupleDesc = TupleDesc.merge(childIt1.getTupleDesc(), childIt2.getTupleDesc());
-        if(p.getOperator() == Predicate.Op.EQUALS)
-        {
-            useHashEquiJoin = true;
-        }
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -123,121 +114,39 @@ public class Join extends Operator {
     
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        if(useHashEquiJoin)
+        if(!fetched)
         {
-            if(!fetched)
-            {
-                fetched = true;
-                if(!childIt2.hasNext())
-                    return null;
-                while(childIt2.hasNext())
-                {
-                    Tuple t2 = childIt2.next();
-                    int t2FieldHashed = t2.getField(predicate.getField2()).hashCode();
-                    if(!hashed.containsKey(t2FieldHashed))
-                    {
-                        ArrayList<Tuple> al = new ArrayList<>();
-                        al.add(t2);
-                        hashed.put(t2FieldHashed, al);
-                    }
-                    else
-                    {
-                        hashed.get(t2FieldHashed).add(t2);
-                    }
-                }
-            }
-    
-            if(fetching)
-            {
-                if(t2It.hasNext())
-                {
-                    Tuple t2 = t2It.next();
-                    if(predicate.filter(t1, t2))
-                    {
-                        Tuple newTuple = new Tuple(tupleDesc);
-                        int now = 0;
-                        Iterator<Field> it = t1.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        it = t2.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        return newTuple;
-                    }
-                }
-                fetching = false;
-            }
-    
-            while(childIt1.hasNext())
-            {
-                t1 = childIt1.next();
-                int t1FieldHashed = t1.getField(predicate.getField1()).hashCode();
-                if(hashed.containsKey(t1FieldHashed))
-                {
-                    ArrayList<Tuple> t2s = hashed.get(t1FieldHashed);
-                    t2It = t2s.iterator();
-                    Tuple t2 = t2It.next();
-                    if(predicate.filter(t1, t2))
-                    {
-                        fetching = true;
-                        Tuple newTuple = new Tuple(tupleDesc);
-                        int now = 0;
-                        Iterator<Field> it = t1.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        it = t2.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        return newTuple;
-                    }
-                }
-            }
-            return null;
+            fetched = true;
+            if(!childIt1.hasNext())
+                return null;
+            t1 = childIt1.next();
         }
-        else
+        while(true)
         {
-            if(!fetched)
+            while(childIt2.hasNext())
             {
-                fetched = true;
-                if(!childIt1.hasNext())
-                    return null;
-                t1 = childIt1.next();
-            }
-            while(true)
-            {
-                while(childIt2.hasNext())
+                Tuple t2 = childIt2.next();
+                if(predicate.filter(t1, t2))
                 {
-                    Tuple t2 = childIt2.next();
-                    if(predicate.filter(t1, t2))
+                    Tuple newTuple = new Tuple(tupleDesc);
+                    int now = 0;
+                    Iterator<Field> it = t1.fields();
+                    while(it.hasNext())
                     {
-                        Tuple newTuple = new Tuple(tupleDesc);
-                        int now = 0;
-                        Iterator<Field> it = t1.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        it = t2.fields();
-                        while(it.hasNext())
-                        {
-                            newTuple.setField(now++, it.next());
-                        }
-                        return newTuple;
+                        newTuple.setField(now++, it.next());
                     }
+                    it = t2.fields();
+                    while(it.hasNext())
+                    {
+                        newTuple.setField(now++, it.next());
+                    }
+                    return newTuple;
                 }
-                childIt2.rewind();
-                if(!childIt1.hasNext())
-                    return null;
-                t1 = childIt1.next();
             }
+            childIt2.rewind();
+            if(!childIt1.hasNext())
+                return null;
+            t1 = childIt1.next();
         }
     }
 

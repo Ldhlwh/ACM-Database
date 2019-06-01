@@ -67,9 +67,15 @@ public class JoinOptimizer {
         }
 
         JoinPredicate p = new JoinPredicate(t1id, lj.p, t2id);
-
-        j = new Join(p,plan1,plan2);
-
+        
+        if(lj.p.equals(Predicate.Op.EQUALS))
+        {
+            j = new HashEquiJoin(p, plan1, plan2);
+        }
+        else
+        {
+            j = new Join(p, plan1, plan2);
+        }
         return j;
 
     }
@@ -111,7 +117,14 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+            
+            if(j.p == Predicate.Op.EQUALS)  // HashEquiJoin
+            {
+                return cost1 + cost2 + card1 * card2;   // You may see my writeup for more details.
+            }
+            
+            // Natural Join
+            return cost1 + card1 * cost2 + card1 * card2;
         }
     }
 
@@ -155,9 +168,32 @@ public class JoinOptimizer {
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-        int card = 1;
         // some code goes here
-        return card <= 0 ? 1 : card;
+        
+        // You may see my writeup for more details.
+        if(joinOp == Predicate.Op.EQUALS)
+        {
+            if(t1pkey && t2pkey)
+                return Math.min(card1, card2);
+            if(t1pkey)
+                return card2;
+            if(t2pkey)
+                return card1;
+            return Math.max(card1, card2);
+        }
+        if(joinOp == Predicate.Op.NOT_EQUALS)
+        {
+            int total = card1 * card2;
+            if(t1pkey && t2pkey)
+                return total - Math.min(card1, card2);
+            if(t1pkey)
+                return total - card2;
+            if(t2pkey)
+                return total - card1;
+            return total - Math.max(card1, card2);
+        }
+        // Other ops. (range op)
+        return (int)(card1 * card2 * 0.3);
     }
 
     /**
@@ -171,7 +207,7 @@ public class JoinOptimizer {
      * @return a set of all subsets of the specified size
      */
     @SuppressWarnings("unchecked")
-    public <T> Set<Set<T>> enumerateSubsets(Vector<T> v, int size) {
+    public <T> Set<Set<T>> enumerateSubsets(Set<T> v, int size) {
         Set<Set<T>> els = new HashSet<Set<T>>();
         els.add(new HashSet<T>());
         // Iterator<Set> it;
@@ -192,6 +228,8 @@ public class JoinOptimizer {
         return els;
 
     }
+    
+    private PlanCache planCache = new PlanCache();
 
     /**
      * Compute a logical, reasonably efficient join on the specified tables. See
@@ -218,10 +256,34 @@ public class JoinOptimizer {
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
         //Not necessary for labs 1--3
-
         // some code goes here
-        //Replace the following
-        return joins;
+        if(joins.isEmpty())
+            return joins;
+        HashSet<LogicalJoinNode> joinSet = new HashSet<>(joins);
+        int numJoins = joinSet.size();
+        for(int i = 1; i <= numJoins; i++)
+        {
+            for(Set<LogicalJoinNode> subset : enumerateSubsets(joinSet, i))
+            {
+                Vector<LogicalJoinNode> bestPlan = null;
+                Double bestCost = Double.MAX_VALUE;
+                int bestCard = 0;
+                for(LogicalJoinNode delta : subset)
+                {
+                    CostCard cc = computeCostAndCardOfSubplan(stats, filterSelectivities, delta, subset, bestCost, planCache);
+                    if(cc == null)
+                        continue;
+                    if(cc.cost < bestCost)
+                    {
+                        bestCost = cc.cost;
+                        bestPlan = cc.plan;
+                        bestCard = cc.card;
+                    }
+                }
+                planCache.addPlan(subset, bestCost, bestCard, bestPlan);
+            }
+        }
+        return planCache.getOrder(joinSet);
     }
 
     // ===================== Private Methods =================================

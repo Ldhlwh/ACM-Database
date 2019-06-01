@@ -89,4 +89,10 @@ public interface DbFile {
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc();
+    
+    /**
+     * Returns the number of pages the table has.
+     * @return # pages.
+     */
+    public int numPages();
 }
