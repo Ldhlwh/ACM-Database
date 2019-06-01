@@ -293,7 +293,7 @@ public class BufferPool {
 		{
 			case LRU_POLICY:
 				PageId rtn = (PageId)idToTime.keySet().toArray()[0];
-				int minTime = 0xFFFFFFFF;
+				int minTime = Integer.MAX_VALUE;
 				for(Map.Entry<PageId, Integer> entry : idToTime.entrySet())
 				{
 					if(entry.getValue() < minTime)

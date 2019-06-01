@@ -18,11 +18,13 @@ public class BTreeChecker {
         public BTreePageId leftmostId;
         public BTreePageId ptrRight;
         public BTreePageId rightmostId;
+        private BTreeLeafPage base;
 
         SubtreeSummary() {}
 
         SubtreeSummary(BTreeLeafPage base, int depth) {
             this.depth = depth;
+            this.base = base;
 
             this.leftmostId = base.getId();
             this.rightmostId = base.getId();
@@ -46,6 +48,7 @@ public class BTreeChecker {
             ans.rightmostId = right.rightmostId;
             return ans;
         }
+        
     }
 
     /**

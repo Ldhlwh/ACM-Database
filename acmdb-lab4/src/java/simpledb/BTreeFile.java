@@ -303,6 +303,7 @@ public class BTreeFile implements DbFile {
 			newLeafPage.setRightSiblingId(page.getRightSiblingId());
 			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, newLeafPage.getRightSiblingId(), Permissions.READ_ONLY);
 			nextPage.setLeftSiblingId(newLeafPage.getId());
+			dirtypages.put(nextPage.getId(), nextPage);
 		}
 		page.setRightSiblingId(newLeafPage.getId());
 		
@@ -887,6 +888,7 @@ public class BTreeFile implements DbFile {
 		{
 			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, rightPage.getRightSiblingId(), Permissions.READ_ONLY);
 			nextPage.setLeftSiblingId(leftPage.getId());
+			dirtypages.put(nextPage.getId(), nextPage);
 		}
 		setEmptyPage(tid, dirtypages, rightPage.getId().pageNumber());
 	}
