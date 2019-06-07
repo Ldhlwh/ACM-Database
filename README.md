@@ -1,5 +1,11 @@
 # acmdb-YuxuanDuan
 
+### 2019.6.7 Note:
+
+Minor updates are done to some of the previous lab reports.
+
+I have fininshed all the labs so far on time. Although some environment or code format updates were automatically done by my IDE and the commitment history may suggests that I have changed the codes of the previous labs after the deadlines, I guarantee that no change has been done manually after the commitment "Lab x Finished.".
+
 ### 2019.6.1 Note:
 
 Lab 4 is finished, the new contents are in ./acmdb-lab4
