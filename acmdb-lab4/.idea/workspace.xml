@@ -1,26 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c7b22032-93a3-43f8-bf4a-2d2f1cd19e9e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/BTreeChecker$SubtreeSummary.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/BTreeChecker$SubtreeSummary.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/BTreeChecker.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/BTreeChecker.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/BTreeFile.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/BTreeFile.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/BTreeFileIterator.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/BTreeFileIterator.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/BTreeSearchIterator.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/BTreeSearchIterator.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/IntHistogram$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/IntHistogram$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/IntHistogram.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/IntHistogram.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/JoinOptimizer.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/JoinOptimizer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/LogicalPlan.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/LogicalPlan.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/OperatorCardinality.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/OperatorCardinality.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/Parser.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/Parser.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/StringHistogram.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/StringHistogram.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/TableStats.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/TableStats.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bin/src/simpledb/TupleArrayIterator.class" beforeDir="false" afterPath="$PROJECT_DIR$/bin/src/simpledb/TupleArrayIterator.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/simpledb/BTreeChecker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/simpledb/BTreeChecker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/simpledb/BTreeFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/simpledb/BTreeFile.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/java/simpledb/BufferPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/java/simpledb/BufferPool.java" afterDir="false" />
-    </list>
+    <list default="true" id="c7b22032-93a3-43f8-bf4a-2d2f1cd19e9e" name="Default Changelist" comment="" />
     <ignored path="$PROJECT_DIR$/classes/" />
     <ignored path="$PROJECT_DIR$/bin/src/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -38,7 +19,7 @@
         <entry file="file://$PROJECT_DIR$/src/java/simpledb/BTreeFile.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="115">
-              <caret line="524" column="8" lean-forward="true" selection-start-line="524" selection-start-column="8" selection-end-line="524" selection-end-column="8" />
+              <caret line="524" column="8" selection-start-line="524" selection-start-column="8" selection-end-line="524" selection-end-column="8" />
             </state>
           </provider>
         </entry>
@@ -46,7 +27,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/java/simpledb/BufferPool.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="59">
+            <state relative-caret-position="5396">
               <caret line="295" column="47" selection-start-line="295" selection-start-column="47" selection-end-line="295" selection-end-column="47" />
             </state>
           </provider>
@@ -139,7 +120,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="PackagesPane" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -187,7 +168,7 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -301,6 +282,7 @@
       <workItem from="1559350650579" duration="232000" />
       <workItem from="1559359636462" duration="1541000" />
       <workItem from="1559363308566" duration="4457000" />
+      <workItem from="1560321400202" duration="81000" />
     </task>
     <servers />
   </component>
@@ -337,7 +319,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="92636000" />
+    <option name="totallyTimeSpent" value="92717000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -349,10 +331,10 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-6" y="-6" width="1381" height="885" extended-state="6" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.53589314" visible="true" weight="0.21315193" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.53589314" visible="true" weight="0.2153518" />
       <window_info id="Image Layers" order="1" />
       <window_info id="Capture Tool" order="2" />
       <window_info id="设计器" order="3" />
@@ -384,7 +366,7 @@
       <window_info anchor="right" id="调色板" order="6" />
       <window_info anchor="right" id="Database" order="7" />
       <window_info anchor="right" id="Theme Preview" order="8" />
-      <window_info anchor="right" id="Structure" order="9" sideWeight="0.46410686" side_tool="true" visible="true" weight="0.16024187" />
+      <window_info anchor="right" id="Structure" order="9" sideWeight="0.46410686" side_tool="true" visible="true" weight="0.15991472" />
       <window_info anchor="right" id="Maven" order="10" />
       <window_info anchor="right" id="Palette" order="11" />
     </layout>
@@ -794,13 +776,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/java/simpledb/BufferPool.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="59">
-          <caret line="295" column="47" selection-start-line="295" selection-start-column="47" selection-end-line="295" selection-end-column="47" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/test/simpledb/systemtest/BTreeFileDeleteTest.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
@@ -832,7 +807,14 @@
     <entry file="file://$PROJECT_DIR$/src/java/simpledb/BTreeFile.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="115">
-          <caret line="524" column="8" lean-forward="true" selection-start-line="524" selection-start-column="8" selection-end-line="524" selection-end-column="8" />
+          <caret line="524" column="8" selection-start-line="524" selection-start-column="8" selection-end-line="524" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/java/simpledb/BufferPool.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5396">
+          <caret line="295" column="47" selection-start-line="295" selection-start-column="47" selection-end-line="295" selection-end-column="47" />
         </state>
       </provider>
     </entry>
