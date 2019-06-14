@@ -301,7 +301,7 @@ public class BTreeFile implements DbFile {
 		if(page.getRightSiblingId() != null)
 		{
 			newLeafPage.setRightSiblingId(page.getRightSiblingId());
-			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, newLeafPage.getRightSiblingId(), Permissions.READ_ONLY);
+			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, newLeafPage.getRightSiblingId(), Permissions.READ_WRITE);
 			nextPage.setLeftSiblingId(newLeafPage.getId());
 			dirtypages.put(nextPage.getId(), nextPage);
 		}
@@ -886,7 +886,7 @@ public class BTreeFile implements DbFile {
 		leftPage.setRightSiblingId(rightPage.getRightSiblingId());
 		if(rightPage.getRightSiblingId() != null)
 		{
-			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, rightPage.getRightSiblingId(), Permissions.READ_ONLY);
+			BTreeLeafPage nextPage = (BTreeLeafPage)getPage(tid, dirtypages, rightPage.getRightSiblingId(), Permissions.READ_WRITE);
 			nextPage.setLeftSiblingId(leftPage.getId());
 			dirtypages.put(nextPage.getId(), nextPage);
 		}
@@ -1002,7 +1002,7 @@ public class BTreeFile implements DbFile {
 	 * many pages since parent pointers will need to be updated when an internal node merges.
 	 * @see #handleMinOccupancyPage(TransactionId, HashMap, BTreePage)
 	 */
-	public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) 
+	public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		HashMap<PageId, Page> dirtypages = new HashMap<PageId, Page>();
 
@@ -1013,11 +1013,11 @@ public class BTreeFile implements DbFile {
 
 		// if the page is below minimum occupancy, get some tuples from its siblings
 		// or merge with one of the siblings
-		int maxEmptySlots = page.getMaxTuples() - page.getMaxTuples()/2; // ceiling
-		if(page.getNumEmptySlots() > maxEmptySlots) { 
+		int maxEmptySlots = page.getMaxTuples() - page.getMaxTuples() / 2; // ceiling
+		if(page.getNumEmptySlots() > maxEmptySlots)
+		{
 			handleMinOccupancyPage(tid, dirtypages, page);
 		}
-
 		ArrayList<Page> dirtyPagesArr = new ArrayList<Page>();
 		dirtyPagesArr.addAll(dirtypages.values());
 		return dirtyPagesArr;

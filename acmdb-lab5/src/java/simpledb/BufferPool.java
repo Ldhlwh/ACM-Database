@@ -1,11 +1,12 @@
 package simpledb;
 
+import sun.security.provider.SHA;
+
 import java.io.*;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
 
 /**
@@ -20,6 +21,32 @@ import java.util.Map;
  * @Threadsafe, all fields are final
  */
 public class BufferPool {
+	
+	public static final int SHARED = 1;
+	public static final int EXCLUSIVE = 2;
+	private static final int WAIT_TIME = 50;
+	private static final int ABORT_BASE_TIME = 200;
+	private static final int ABORT_VAR_TIME = 200;	// abort time in [Base, Base + Var] millisecond
+	
+	private class PageLock
+	{
+		public TransactionId tid;
+		public PageId pid;
+		public int type;
+		
+		PageLock(TransactionId transactionId, PageId pageId, int t)
+		{
+			tid = transactionId;
+			pid = pageId;
+			type = t;
+		}
+		
+		public String toString()
+		{
+			return "(" + tid + " " + pid.pageNumber() + " " + ((type == EXCLUSIVE) ? "EXCLUSIVE" : "SHARED") + ")";
+		}
+	}
+	
 	/** Bytes per page, including header. */
 	private static final int PAGE_SIZE = 4096;
 	
@@ -35,9 +62,35 @@ public class BufferPool {
 	private static Map<PageId, Page> idToPage;
 	private static Map<PageId, Integer> idToTime;
 	
+	private static Map<TransactionId, ArrayList<PageLock>> tidToLock;
+	private static Map<PageId, ArrayList<PageLock>> pidToExclusive;
+	private static Map<PageId, ArrayList<PageLock>> pidToShared;
+	
+	private static Random rand = new Random();
+	
 	private static final int LRU_POLICY = 1;
-	private static final int RANDOM_POLICY = 2;
+	private static final int RANDOM_POLICY = 2;	// may not support multi-threads
 	private static final int EVICT_POLICY = LRU_POLICY;
+	
+	/**
+	 * Prints all the locks of a page. Just for debugging.
+	 * @param pp
+	 */
+	public synchronized void printPidLock(PageId pp)
+	{
+		System.err.println("PID: " + pp.pageNumber() + "\nExclusive:");
+		ArrayList<PageLock> pll = pidToExclusive.get(pp);
+		for(PageLock plll : pll)
+		{
+			System.err.println(plll.toString());
+		}
+		System.err.println("Shared:");
+		pll = pidToShared.get(pp);
+		for(PageLock plll : pll)
+		{
+			System.err.println(plll.toString());
+		}
+	}
 	
 	/**
 	 * Creates a BufferPool that caches up to numPages pages.
@@ -49,6 +102,9 @@ public class BufferPool {
 		maxPages = numPages;
 		idToPage = new HashMap<>();
 		idToTime = new HashMap<>();
+		tidToLock = new HashMap<>();
+		pidToExclusive = new HashMap<>();
+		pidToShared = new HashMap<>();
 	}
 	
 	public static int getPageSize() {
@@ -80,10 +136,80 @@ public class BufferPool {
 	 * @param pid the ID of the requested page
 	 * @param perm the requested permissions on the page
 	 */
-	public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+	public synchronized Page getPage(TransactionId tid, PageId pid, Permissions perm)
 			throws TransactionAbortedException, DbException
 	{
 		// some code goes here
+		PageLock pageLock;
+		if(!pidToExclusive.containsKey(pid))
+			pidToExclusive.put(pid, new ArrayList<>());
+		if(!pidToShared.containsKey(pid))
+			pidToShared.put(pid, new ArrayList<>());
+		if(!tidToLock.containsKey(tid))
+			tidToLock.put(tid, new ArrayList<>());
+		long stTime = System.currentTimeMillis();
+		if(perm == Permissions.READ_ONLY)
+		{
+			while(!pidToExclusive.get(pid).isEmpty())
+			{
+				long edTime = System.currentTimeMillis();
+				if(pidToExclusive.get(pid).get(0).tid == tid)
+					break;
+				if(edTime - stTime > ABORT_BASE_TIME + rand.nextInt(ABORT_VAR_TIME))
+				{
+					//System.err.println(tid + " aborted");
+					throw new TransactionAbortedException();
+				}
+				try
+				{
+					wait(WAIT_TIME);
+				} catch(InterruptedException e) {}
+			}
+			pageLock = new PageLock(tid, pid, SHARED);
+			if(!pidToShared.containsKey(pid))
+				pidToShared.put(pid, new ArrayList<>());
+			pidToShared.get(pid).add(pageLock);
+		}
+		else
+		{
+			while(!pidToExclusive.get(pid).isEmpty() || !pidToShared.get(pid).isEmpty())
+			{
+				long edTime = System.currentTimeMillis();
+				if(pidToExclusive.get(pid).isEmpty())
+				{
+					Iterator<PageLock> it = pidToShared.get(pid).iterator();
+					boolean single = true;
+					while(it.hasNext())
+					{
+						PageLock pl = it.next();
+						if(pl.tid != tid)
+						{
+							single = false;
+							break;
+						}
+					}
+					if(single)
+						break;
+				}
+				else if(pidToExclusive.get(pid).get(0).tid == tid)
+					break;
+				if(edTime - stTime > ABORT_BASE_TIME + rand.nextInt(ABORT_VAR_TIME))
+				{
+					//System.err.println(tid + " aborted");
+					throw new TransactionAbortedException();
+				}
+				try
+				{
+					wait(WAIT_TIME);
+				} catch(InterruptedException e) {}
+			}
+			pageLock = new PageLock(tid, pid, EXCLUSIVE);
+			if(!pidToExclusive.containsKey(pid))
+				pidToExclusive.put(pid, new ArrayList<>());
+			pidToExclusive.get(pid).add(pageLock);
+		}
+		tidToLock.get(tid).add(pageLock);
+		
 		if(idToPage.containsKey(pid))
 		{
 			idToTime.put(pid, time++);
@@ -108,7 +234,7 @@ public class BufferPool {
 	 * If the page is already in the BufferPool (but as an old version), repalce it.
 	 * Otherwise, instead of getting it through the Catalog, use the page provided.
 	 */
-	private void replacePage(TransactionId tid, Page page, Permissions perm)
+	private synchronized void replacePage(TransactionId tid, Page page, Permissions perm)
 		throws TransactionAbortedException, DbException
 	{
 		PageId pid = page.getId();
@@ -137,9 +263,40 @@ public class BufferPool {
 	 * @param tid the ID of the transaction requesting the unlock
 	 * @param pid the ID of the page to unlock
 	 */
-	public  void releasePage(TransactionId tid, PageId pid) {
+	public synchronized void releasePage(TransactionId tid, PageId pid) {
 		// some code goes here
 		// not necessary for lab1|lab2
+		if(tidToLock.containsKey(tid))
+		{
+			Iterator<PageLock> it = tidToLock.get(tid).iterator();
+			while(it.hasNext())
+			{
+				PageLock pl = it.next();
+				if(pl.pid == pid)
+					it.remove();
+			}
+		}
+		if(pidToExclusive.containsKey(pid))
+		{
+			Iterator<PageLock> it = pidToExclusive.get(pid).iterator();
+			while(it.hasNext())
+			{
+				PageLock pl = it.next();
+				if(pl.tid == tid)
+					it.remove();
+			}
+		}
+		if(pidToShared.containsKey(pid))
+		{
+			Iterator<PageLock> it = pidToShared.get(pid).iterator();
+			while(it.hasNext())
+			{
+				PageLock pl = it.next();
+				if(pl.tid == tid)
+					it.remove();
+			}
+		}
+		notifyAll();
 	}
 	
 	/**
@@ -150,12 +307,22 @@ public class BufferPool {
 	public void transactionComplete(TransactionId tid) throws IOException {
 		// some code goes here
 		// not necessary for lab1|lab2
+		transactionComplete(tid, true);
 	}
 	
 	/** Return true if the specified transaction has a lock on the specified page */
-	public boolean holdsLock(TransactionId tid, PageId p) {
+	public synchronized boolean holdsLock(TransactionId tid, PageId p) {
 		// some code goes here
 		// not necessary for lab1|lab2
+		Iterator<PageLock> it = tidToLock.get(tid).iterator();
+		while(it.hasNext())
+		{
+			PageLock pl = it.next();
+			if(pl.pid == p)
+			{
+				return true;
+			}
+		}
 		return false;
 	}
 	
@@ -166,10 +333,65 @@ public class BufferPool {
 	 * @param tid the ID of the transaction requesting the unlock
 	 * @param commit a flag indicating whether we should commit or abort
 	 */
-	public void transactionComplete(TransactionId tid, boolean commit)
+	public synchronized void transactionComplete(TransactionId tid, boolean commit)
 			throws IOException {
 		// some code goes here
 		// not necessary for lab1|lab2
+		if(commit)
+		{
+			flushPages(tid);
+		}
+		else
+		{
+			/*
+			 * If a transaction is aborted, some pages may have been modified yet not marked dirty.
+			 * So discard all the pages with exclusive lock.
+			 */
+			if(tidToLock.containsKey(tid))
+			{
+				Iterator<PageLock> it = tidToLock.get(tid).iterator();
+				while(it.hasNext())
+				{
+					PageLock pl = it.next();
+					if(pl.type == EXCLUSIVE)
+					{
+						discardPage(pl.pid);
+					}
+				}
+				
+			}
+		}
+		if(!tidToLock.containsKey(tid))
+		{
+			notifyAll();
+			return;
+		}
+		ArrayList<PageLock> pageLocks = tidToLock.get(tid);
+		for(PageLock pl : pageLocks)
+		{
+			PageId pageId = pl.pid;
+			Iterator<PageLock> it = pidToExclusive.get(pageId).iterator();
+			while(it.hasNext())
+			{
+				PageLock pageLock = it.next();
+				if(pageLock.tid == tid)
+				{
+					it.remove();
+				}
+			}
+			it = pidToShared.get(pageId).iterator();
+			while(it.hasNext())
+			{
+				PageLock pageLock = it.next();
+				if(pageLock.tid == tid)
+				{
+					it.remove();
+				}
+			}
+		}
+		pageLocks.clear();
+		tidToLock.remove(tid);
+		notifyAll();
 	}
 	
 	/**
@@ -187,16 +409,21 @@ public class BufferPool {
 	 * @param tableId the table to add the tuple to
 	 * @param t the tuple to add
 	 */
-	public void insertTuple(TransactionId tid, int tableId, Tuple t)
+	public synchronized void insertTuple(TransactionId tid, int tableId, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
 		DbFile file = Database.getCatalog().getDatabaseFile(tableId);
 		ArrayList<Page> dirty = file.insertTuple(tid, t);
-		for(Page p : dirty)
+		
+		synchronized(this)
 		{
-			replacePage(tid, p, Permissions.READ_WRITE);
-			p.markDirty(true, tid);
+			for(Page p : dirty)
+			{
+				getPage(tid, p.getId(), Permissions.READ_WRITE);
+				replacePage(tid, p, Permissions.READ_WRITE);
+				p.markDirty(true, tid);
+			}
 		}
 	}
 	
@@ -213,16 +440,20 @@ public class BufferPool {
 	 * @param tid the transaction deleting the tuple.
 	 * @param t the tuple to delete
 	 */
-	public  void deleteTuple(TransactionId tid, Tuple t)
+	public synchronized void deleteTuple(TransactionId tid, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
 		DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
 		ArrayList<Page> dirty = file.deleteTuple(tid, t);
-		for(Page p : dirty)
+		synchronized(this)
 		{
-			replacePage(tid, p, Permissions.READ_WRITE);
-			p.markDirty(true, tid);
+			for(Page p : dirty)
+			{
+				getPage(tid, p.getId(), Permissions.READ_WRITE);
+				replacePage(tid, p, Permissions.READ_WRITE);
+				p.markDirty(true, tid);
+			}
 		}
 	}
 	
@@ -251,8 +482,12 @@ public class BufferPool {
 	public synchronized void discardPage(PageId pid) {
 		// some code goes here
 		// not necessary for lab1
-		idToTime.remove(pid);
-		idToPage.remove(pid);
+		if(idToTime.containsKey(pid))
+		{
+			idToTime.remove(pid);
+			idToPage.remove(pid);
+			idToPage.remove(pid);
+		}
 	}
 	
 	/**
@@ -281,26 +516,42 @@ public class BufferPool {
 	public synchronized  void flushPages(TransactionId tid) throws IOException {
 		// some code goes here
 		// not necessary for lab1|lab2
+		if(!tidToLock.containsKey(tid))
+			return;
+		ArrayList<PageLock> pageLocks = tidToLock.get(tid);
+		for(PageLock pl : pageLocks)
+		{
+			if(pl.type == EXCLUSIVE && idToPage.containsKey(pl.pid))
+			{
+				flushPage(pl.pid);
+			}
+		}
 	}
 	
 	/**
 	 * Decides which page to discard.
 	 *
 	 */
-	private synchronized PageId choosePage()
+	private synchronized PageId choosePage() throws DbException
 	{
 		switch(EVICT_POLICY)
 		{
 			case LRU_POLICY:
 				PageId rtn = (PageId)idToTime.keySet().toArray()[0];
 				int minTime = Integer.MAX_VALUE;
+				boolean success = false;
 				for(Map.Entry<PageId, Integer> entry : idToTime.entrySet())
 				{
-					if(entry.getValue() < minTime)
+					if(entry.getValue() < minTime && idToPage.get(entry.getKey()).isDirty() == null)
 					{
+						success = true;
 						rtn = entry.getKey();
 						minTime = entry.getValue();
 					}
+				}
+				if(!success)
+				{
+					throw new DbException("No page is clean, cannot choose one to evict.");
 				}
 				return rtn;
 			case RANDOM_POLICY:

@@ -89,7 +89,7 @@ public class HeapFile implements DbFile {
     }
 
     // see DbFile.java for javadocs
-    public void writePage(Page page) throws IOException {
+    public synchronized void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
         RandomAccessFile raf = new RandomAccessFile(file, "rw");
@@ -129,6 +129,7 @@ public class HeapFile implements DbFile {
                 if(e.getMessage().equals("TupleDesc mismatch."))
                     throw new DbException("TupleDesc mismatch, the tuple cannot be inserted.");
             }
+            Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), i));
         }
         // Need to create a new page to the file
         HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPage), HeapPage.createEmptyPageData());
@@ -143,7 +144,6 @@ public class HeapFile implements DbFile {
             TransactionAbortedException {
         // some code goes here
         PageId pageId = t.getRecordId().getPageId();
-        int tupleNo = t.getRecordId().tupleno();
         HeapPage page = (HeapPage)Database.getBufferPool().getPage(tid, pageId, Permissions.READ_WRITE);
         page.deleteTuple(t);
         ArrayList<Page> rtn = new ArrayList<>();
@@ -181,6 +181,7 @@ public class HeapFile implements DbFile {
                     return true;
                 if(curId == numIterators - 1)
                     return false;
+                Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), curId));
                 curIterator = ((HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(getId(), ++curId), Permissions.READ_ONLY)).iterator();
             }
             return false;
