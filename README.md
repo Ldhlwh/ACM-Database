@@ -1,5 +1,9 @@
 # acmdb-YuxuanDuan
 
+### 2019.6.14 Note:
+
+Lab 5 is finished, the new contents are in ./acmdb-lab5
+
 ### 2019.6.7 Note:
 
 Minor updates are done to some of the previous lab reports.
