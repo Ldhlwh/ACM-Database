@@ -409,7 +409,7 @@ public class BufferPool {
 	 * @param tableId the table to add the tuple to
 	 * @param t the tuple to add
 	 */
-	public synchronized void insertTuple(TransactionId tid, int tableId, Tuple t)
+	public void insertTuple(TransactionId tid, int tableId, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
@@ -420,7 +420,7 @@ public class BufferPool {
 		{
 			for(Page p : dirty)
 			{
-				getPage(tid, p.getId(), Permissions.READ_WRITE);
+				//getPage(tid, p.getId(), Permissions.READ_WRITE);
 				replacePage(tid, p, Permissions.READ_WRITE);
 				p.markDirty(true, tid);
 			}
@@ -440,7 +440,7 @@ public class BufferPool {
 	 * @param tid the transaction deleting the tuple.
 	 * @param t the tuple to delete
 	 */
-	public synchronized void deleteTuple(TransactionId tid, Tuple t)
+	public void deleteTuple(TransactionId tid, Tuple t)
 			throws DbException, IOException, TransactionAbortedException {
 		// some code goes here
 		// not necessary for lab1
@@ -450,7 +450,7 @@ public class BufferPool {
 		{
 			for(Page p : dirty)
 			{
-				getPage(tid, p.getId(), Permissions.READ_WRITE);
+				//getPage(tid, p.getId(), Permissions.READ_WRITE);
 				replacePage(tid, p, Permissions.READ_WRITE);
 				p.markDirty(true, tid);
 			}
