@@ -132,10 +132,16 @@ public class HeapFile implements DbFile {
             Database.getBufferPool().releasePage(tid, new HeapPageId(getId(), i));
         }
         // Need to create a new page to the file
-        HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPage), HeapPage.createEmptyPageData());
+        /*HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPage), HeapPage.createEmptyPageData());
         newPage.insertTuple(t);
         rtn.add(newPage);
         writePage(newPage);
+		*/
+		HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPage), HeapPage.createEmptyPageData());
+		writePage(newPage);
+		newPage = (HeapPage)Database.getBufferPool().getPage(tid, newPage.getId(), Permissions.READ_WRITE);
+		newPage.insertTuple(t);
+        rtn.add(newPage);
         return rtn;
     }
 
